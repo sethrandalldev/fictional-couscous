@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8000;
 const { Client } = require("pg");
+const cors = require("cors");
 
 const client = new Client({
   user: "postgres",
@@ -14,10 +15,12 @@ const client = new Client({
 client.connect();
 
 app.use(express.json());
+app.use(cors());
 
-app.get("/workspaces", (req, res) => {
-  const query = "SELECT * FROM workspaces";
-  client.query(query, (err, data) => {
+app.get("/:userId/workspaces", (req, res) => {
+  const query = "SELECT * FROM workspaces WHERE created_by = $1";
+  const values = [req.params.userId];
+  client.query(query, values, (err, data) => {
     if (err) {
       console.error(err.stack);
       return res.sendStatus(400);
@@ -28,7 +31,7 @@ app.get("/workspaces", (req, res) => {
   });
 });
 
-app.post("/workspaces", async (req, res) => {
+app.post("/workspaces", (req, res) => {
   const query =
     "INSERT INTO workspaces(title, description, created_by) VALUES($1, $2, $3) RETURNING *";
   const values = [req.body.title, req.body.description, req.body.userId];
