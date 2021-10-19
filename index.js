@@ -3,6 +3,12 @@ const app = express();
 const PORT = 8000;
 const { Client } = require("pg");
 const cors = require("cors");
+const admin = require("firebase-admin");
+const serviceAccount = require("./project-tracker-9ec23-firebase-adminsdk-16f4u-9a747d97af.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 const client = new Client({
   user: "postgres",
