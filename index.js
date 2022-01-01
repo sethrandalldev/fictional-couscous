@@ -9,13 +9,13 @@ const serviceAccount = require("./project-tracker-9ec23-firebase-adminsdk-16f4u-
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
-
+console.log("before new client");
 const client = new Client({
   user: "postgres",
   host: "localhost",
   database: "postgres",
   password: "",
-  port: 5432,
+  port: 5555,
 });
 
 client.connect();
@@ -94,6 +94,30 @@ app.delete("/workspaces/:id", (req, res) => {
       return res.sendStatus(400);
     } else {
       return res.sendStatus(200);
+    }
+  });
+});
+
+app.post("/tickets", (req, res) => {
+  const query =
+    "INSERT INTO tickets(title, assigned_to, created_by, status, priority, project_id, workspace_id) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *";
+  const values = [
+    req.body.title,
+    req.body.assignedTo,
+    req.body.createdBy,
+    req.body.status,
+    req.body.priority,
+    req.body.projectId,
+    req.body.workspaceId,
+  ];
+
+  client.query(query, values, (err, data) => {
+    if (err) {
+      console.error(err.stack);
+      return res.sendStatus(400);
+    } else {
+      const ticket = data.rows[0];
+      return res.status(200).send(ticket);
     }
   });
 });
