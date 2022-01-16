@@ -2,80 +2,123 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const argon2 = require("argon2");
 const cors = require("cors");
+const knex = require("knex");
+
+const db = knex({
+  client: "pg",
+  connection: {
+    host: "127.0.0.1",
+    port: "5555",
+    user: "postgres",
+    password: "",
+    database: "project_tracker",
+  },
+});
 
 const app = express();
 
 app.use(bodyParser.json());
 app.use(cors());
 
-const database = {
-  users: [
-    {
-      id: "123",
-      name: "Seth",
-      email: "seth@gmail.com",
-      password: "cookies",
-      created: new Date(),
-    },
-    {
-      id: "124",
-      name: "John",
-      email: "john@gmail.com",
-      password: "bananas",
-      created: new Date(),
-    },
-  ],
-};
-
-app.get("/", (req, res) => {
-  res.json(database.users);
-});
-
-app.post("/login", async (req, res) => {
-  if (req.body.email === database.users[2].email) {
-    try {
-      if (await argon2.verify(database.users[2].password, req.body.password)) {
-        res.json("success");
-      } else {
-        res.status(404).json("Login failed; Invalid user ID or password.");
+app.post("/login", (req, res) => {
+  db.select()
+    .table("users")
+    .where({
+      email: req.body.email,
+    })
+    .then(async (users) => {
+      const user = users[0];
+      try {
+        if (await argon2.verify(user.password, req.body.password)) {
+          res.json({
+            email: user.email,
+            firstName: user["first_name"],
+            lastName: user["last_name"],
+            id: user.id,
+            joined: user.joined,
+          });
+        } else {
+          res.status(404).json("Login failed; Invalid user ID or password.");
+        }
+      } catch (err) {
+        res.status(400).json("Login failed; Server error.");
       }
-    } catch (err) {
-      res.status(400).json("Login failed; server error.");
-    }
-  } else {
-    res.status(400).json("error logging in");
-  }
+    })
+    .catch((err) => res.status(400).json("Login failed; Server error."));
 });
 
 app.post("/register", async (req, res) => {
-  const { email, name, password } = req.body;
+  const { email, firstName, lastName, password } = req.body;
   try {
     const hash = await argon2.hash(password);
-    database.users.push({
-      id: "125",
-      name,
-      email,
-      password: hash,
-      created: new Date(),
-    });
-    res.json(database.users[database.users.length - 1]);
+    db("users")
+      .returning(["id", "first_name", "last_name", "email", "joined"])
+      .insert({
+        email: email,
+        first_name: firstName,
+        last_name: lastName,
+        password: hash,
+        joined: new Date(),
+      })
+      .then((user) => {
+        res.json({
+          email: user.email,
+          firstName: user["first_name"],
+          lastName: user["last_name"],
+          id: user.id,
+          joined: user.joined,
+        });
+      })
+      .catch((err) => res.status(400).json("Unable to register."));
   } catch (err) {
-    res.status(400).json("Error registering user.");
+    res.status(400).json("Unable to register.");
   }
 });
 
 app.get("/profile/:id", (req, res) => {
   const { id } = req.params;
-  let found = false;
-  database.users.forEach((user) => {
-    if (user.id === id) {
-      found = true;
-      res.json(user);
-    }
-  });
-  if (!found) {
-    res.status(404).json("no such user");
-  }
+  db.select(["id", "first_name", "last_name", "email", "joined"])
+    .from("users")
+    .where({ id: id })
+    .then((user) => {
+      if (user.length) res.json(user[0]);
+      else {
+        res.status(400).json("Error getting user.");
+      }
+    })
+    .catch((err) => res.status(400).json("Error getting user."));
+});
+
+app.post("/projects", (req, res) => {
+  const { name, description, userId } = req.body;
+  db("projects")
+    .returning(["id", "title", "description"])
+    .insert({
+      name: name,
+      description: description,
+    })
+    .then((project) => {
+      db("project_users")
+        .returning(["id", "user_id", "project_id", "is_admin"])
+        .insert({
+          user_id: userId,
+          project_id: project.id,
+          is_admin: true,
+        })
+        .then((projectUser) => {
+          res.json({
+            project: project,
+            projectUser: {
+              id: projectUser.id,
+              userId: projectUser["user_id"],
+              projectId: projectUser["projectId"],
+              isAdmin: projectUser.isAdmin,
+            },
+          });
+        })
+        .catch((err) => res.status(400).json("Unable to create project user."));
+    })
+    .catch((err) => res.status(400).json("Unable to create project."));
 });
 
 app.listen(4000, () => {
@@ -83,22 +126,18 @@ app.listen(4000, () => {
 });
 
 /*
-/ --> res = this is working
-/login --> POST = success/fail
-/register --> POST = user
-/profile/:userId --> GET = user
+DONE /login --> POST = success/fail
+DONE /register --> POST = user
+DONE profile/:userId --> GET = user
 /projects/:projectId --> GET = project
 /projects --> POST = project
 /projects --> GET = projects
-/workspaces/:workspaceId --> GET = workspace
-/workspaces --> POST = workspace
-/workspaces --> GET = workspaces
-/tickets/:ticketId --> GET = ticket
-/tickets --> POST = ticket
-/tickets --> GET = tickets
-/tickets/:ticketId/comments --> POST = comment
-/tickets/:ticketId/comments --> GET = comments
-/workspaces/:workspaceId/:userId --> POST = workspace_user
-/workspaces/:workspacedId/:userId --> GET = workspace_user
-/workspaces/:workspacedId/users --> GET = workspace_users
+/projects/:projectId/tickets/:ticketId --> GET = ticket
+/projects/:projectId/tickets --> POST = ticket
+/projects/:projectIdtickets --> GET = tickets
+/projects/:projectId/tickets/:ticketId/comments --> POST = comment
+/projects/:projectId/tickets/:ticketId/comments --> GET = comments
+/projects/:projectId/users/:userId --> POST = workspace_user
+/projects/:projectId/users/:userId --> GET = workspace_user
+/projects/:projectId/users --> GET = workspace_users
 */
