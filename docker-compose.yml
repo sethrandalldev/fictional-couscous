@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  #Backend API
+  project-tracker-api:
+    container_name: backend
+    build: ./
+    command: yarn start
+    working_dir: /usr/src/project-tracker-api
+    environment:
+      POSTGRES_URI: postgres://srandall:secret@postgres:5432/project_tracker
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./:/usr/src/project-tracker-api
+      - /usr/src/project-tracker-api/node_modules
+
+  # Postgres
+  postgres:
+    build: ./postgres
+    ports:
+      - "5555:5432"
+    environment:
+      POSTGRES_USER: srandall
+      POSTGRES_DB: project_tracker
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: secret

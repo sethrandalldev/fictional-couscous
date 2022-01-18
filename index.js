@@ -3,33 +3,32 @@ const bodyParser = require("body-parser");
 const argon2 = require("argon2");
 const cors = require("cors");
 const knex = require("knex");
+const morgan = require("morgan");
 
 const db = knex({
   client: "pg",
-  connection: {
-    host: "127.0.0.1",
-    port: "5555",
-    user: "postgres",
-    password: "",
-    database: "project_tracker",
-  },
+  connection: process.env.POSTGRES_URI,
 });
 
 const app = express();
 
+app.use(morgan("combined"));
 app.use(bodyParser.json());
 app.use(cors());
 
 app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+  console.log(req.body);
   db.select()
     .table("users")
     .where({
-      email: req.body.email,
+      email: email,
     })
     .then(async (users) => {
       const user = users[0];
+      console.log(users);
       try {
-        if (await argon2.verify(user.password, req.body.password)) {
+        if (await argon2.verify(user.password, password)) {
           res.json({
             email: user.email,
             firstName: user["first_name"],
@@ -41,10 +40,14 @@ app.post("/login", (req, res) => {
           res.status(404).json("Login failed; Invalid user ID or password.");
         }
       } catch (err) {
+        console.log(err);
         res.status(400).json("Login failed; Server error.");
       }
     })
-    .catch((err) => res.status(400).json("Login failed; Server error."));
+    .catch((err) => {
+      console.log(err);
+      res.status(400).json("Login failed; Server error.");
+    });
 });
 
 app.post("/register", async (req, res) => {
@@ -69,8 +72,12 @@ app.post("/register", async (req, res) => {
           joined: user.joined,
         });
       })
-      .catch((err) => res.status(400).json("Unable to register."));
+      .catch((err) => {
+        console.log(err);
+        res.status(400).json("Unable to register.");
+      });
   } catch (err) {
+    console.log(err);
     res.status(400).json("Unable to register.");
   }
 });
