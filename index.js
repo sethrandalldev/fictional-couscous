@@ -128,6 +128,88 @@ app.post("/projects", (req, res) => {
     .catch((err) => res.status(400).json("Unable to create project."));
 });
 
+app.get("/projects", (req, res) => {
+  db.select(["id", "name", "description"])
+    .from("projects")
+    .then((projects) => {
+      res.status(200).json(projects);
+    })
+    .catch((err) => res.status(400).json("Error getting projects."));
+});
+
+app.get("/projects/:projectId/tickets", (req, res) => {
+  const { projectId } = req.params;
+  db.select([
+    "id",
+    "title",
+    "description",
+    "created_by",
+    "assigned_to",
+    "priority",
+    "status",
+    "project_id",
+  ])
+    .from("tickets")
+    .where({ project_id: projectId })
+    .then((tickets) => {
+      res.status(200).json(tickets);
+    })
+    .catch((err) => res.status(400).json("Error getting tickets."));
+});
+
+app.get("/projects/:projectId/tickets/:ticketId/comments", (req, res) => {
+  const { projectId } = req.params;
+  db.select([
+    "id",
+    "title",
+    "description",
+    "created_by",
+    "assigned_to",
+    "priority",
+    "status",
+    "project_id",
+  ])
+    .from("tickets")
+    .where({ project_id: projectId })
+    .then((tickets) => {
+      res.status(200).json(tickets);
+    })
+    .catch((err) => res.status(400).json("Error getting tickets."));
+});
+
+app.get("/projects/:projectId/project-users", (req, res) => {
+  const { projectId } = req.params;
+  db.select(["id", "user_id", "is_admin", "project_id"])
+    .from("project_users")
+    .where({ project_id: projectId })
+    .then((projectUsers) => {
+      res.status(200).json(projectUsers);
+    })
+    .catch((err) => res.status(400).json("Error getting project users."));
+});
+
+// app.get("/project-invitations/sender", (req, res) => {
+//   const { projectId } = req.params;
+//   db.select(["id", "user_id", "is_admin", "project_id"])
+//     .from("project_users")
+//     .where({ project_id: projectId })
+//     .then((projectUsers) => {
+//       res.status(200).json(projectUsers);
+//     })
+//     .catch((err) => res.status(400).json("Error getting project users."));
+// });
+
+// app.get("/project-invitations/recipient", (req, res) => {
+//   const { projectId } = req.params;
+//   db.select(["id", "user_id", "is_admin", "project_id"])
+//     .from("project_users")
+//     .where({ project_id: projectId })
+//     .then((projectUsers) => {
+//       res.status(200).json(projectUsers);
+//     })
+//     .catch((err) => res.status(400).json("Error getting project users."));
+// });
+
 app.listen(4000, () => {
   console.log("App is running on port 4000");
 });
@@ -144,7 +226,7 @@ DONE profile/:userId --> GET = user
 /projects/:projectIdtickets --> GET = tickets
 /projects/:projectId/tickets/:ticketId/comments --> POST = comment
 /projects/:projectId/tickets/:ticketId/comments --> GET = comments
-/projects/:projectId/users/:userId --> POST = workspace_user
-/projects/:projectId/users/:userId --> GET = workspace_user
-/projects/:projectId/users --> GET = workspace_users
+/projects/:projectId/workspace-users/:userId --> POST = workspace_user
+/projects/:projectId/workspace-users/:userId --> GET = workspace_user
+/projects/:projectId/workspace-users --> GET = workspace_users
 */

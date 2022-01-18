@@ -5,13 +5,48 @@ INSERT into users (
   last_name, 
   email, 
   password,
-  joined) 
-  values (
-    'Seth', 
-    'Randall', 
-    'seth@gmail.com', 
-    '$argon2i$v=19$m=4096,t=3,p=1$r8GQ6QkZ4BQ/h7EVh/CN4w$trzsvDTJN+RvdsgtrblLixDoJhV08qre45ln4z16GaA',
-    '2022-01-01'
-  );
+  joined
+) values (
+  'Seth', 
+  'Randall', 
+  'seth@gmail.com', 
+  '$argon2i$v=19$m=4096,t=3,p=1$r8GQ6QkZ4BQ/h7EVh/CN4w$trzsvDTJN+RvdsgtrblLixDoJhV08qre45ln4z16GaA',
+  '2022-01-01'
+);
+
+INSERT INTO projects (
+  name,
+  description
+) values (
+  'Project Tracker',
+);
+
+INSERT INTO projects (
+  name,
+  description
+) values (
+  'Notebook App',
+);
+
+INSERT INTO project_users (
+  user_id,
+  project_id,
+  is_admin
+) values (
+  1,
+  1,
+  true
+);
+
+
+INSERT INTO project_users (
+  user_id,
+  project_id,
+  is_admin
+) values (
+  1,
+  2,
+  true
+);
 
 COMMIT;
