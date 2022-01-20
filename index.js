@@ -18,7 +18,6 @@ app.use(cors());
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  console.log(req.body);
   db.select()
     .table("users")
     .where({
@@ -26,7 +25,6 @@ app.post("/login", (req, res) => {
     })
     .then(async (users) => {
       const user = users[0];
-      console.log(users);
       try {
         if (await argon2.verify(user.password, password)) {
           res.json({
@@ -40,12 +38,12 @@ app.post("/login", (req, res) => {
           res.status(404).json("Login failed; Invalid user ID or password.");
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
         res.status(400).json("Login failed; Server error.");
       }
     })
     .catch((err) => {
-      console.log(err);
+      console.error(err);
       res.status(400).json("Login failed; Server error.");
     });
 });
@@ -73,11 +71,11 @@ app.post("/register", async (req, res) => {
         });
       })
       .catch((err) => {
-        console.log(err);
+        console.error(err);
         res.status(400).json("Unable to register.");
       });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(400).json("Unable to register.");
   }
 });
@@ -97,12 +95,11 @@ app.get("/profile/:id", (req, res) => {
 });
 
 app.post("/projects", (req, res) => {
-  const { name, description, userId } = req.body;
+  const { name, userId } = req.body;
   db("projects")
-    .returning(["id", "title", "description"])
+    .returning(["id", "title"])
     .insert({
       name: name,
-      description: description,
     })
     .then((project) => {
       db("project_users")
@@ -129,7 +126,7 @@ app.post("/projects", (req, res) => {
 });
 
 app.get("/projects", (req, res) => {
-  db.select(["id", "name", "description"])
+  db.select(["id", "name"])
     .from("projects")
     .then((projects) => {
       res.status(200).json(projects);
@@ -188,27 +185,17 @@ app.get("/projects/:projectId/project-users", (req, res) => {
     .catch((err) => res.status(400).json("Error getting project users."));
 });
 
-// app.get("/project-invitations/sender", (req, res) => {
-//   const { projectId } = req.params;
-//   db.select(["id", "user_id", "is_admin", "project_id"])
-//     .from("project_users")
-//     .where({ project_id: projectId })
-//     .then((projectUsers) => {
-//       res.status(200).json(projectUsers);
-//     })
-//     .catch((err) => res.status(400).json("Error getting project users."));
-// });
-
-// app.get("/project-invitations/recipient", (req, res) => {
-//   const { projectId } = req.params;
-//   db.select(["id", "user_id", "is_admin", "project_id"])
-//     .from("project_users")
-//     .where({ project_id: projectId })
-//     .then((projectUsers) => {
-//       res.status(200).json(projectUsers);
-//     })
-//     .catch((err) => res.status(400).json("Error getting project users."));
-// });
+// WHERE user.id === recipient.id OR WHERE user.id === sender.id
+app.get("/project-invitations", (req, res) => {
+  const { projectId } = req.params;
+  db.select(["id", "user_id", "is_admin", "project_id"])
+    .from("project_users")
+    .where({ project_id: projectId })
+    .then((projectUsers) => {
+      res.status(200).json(projectUsers);
+    })
+    .catch((err) => res.status(400).json("Error getting project users."));
+});
 
 app.listen(4000, () => {
   console.log("App is running on port 4000");
@@ -219,14 +206,15 @@ DONE /login --> POST = success/fail
 DONE /register --> POST = user
 DONE profile/:userId --> GET = user
 /projects/:projectId --> GET = project
-/projects --> POST = project
-/projects --> GET = projects
+DONE /projects --> POST = project & project_user
+DONE /projects --> GET = projects
 /projects/:projectId/tickets/:ticketId --> GET = ticket
 /projects/:projectId/tickets --> POST = ticket
 /projects/:projectIdtickets --> GET = tickets
 /projects/:projectId/tickets/:ticketId/comments --> POST = comment
 /projects/:projectId/tickets/:ticketId/comments --> GET = comments
-/projects/:projectId/workspace-users/:userId --> POST = workspace_user
-/projects/:projectId/workspace-users/:userId --> GET = workspace_user
-/projects/:projectId/workspace-users --> GET = workspace_users
+/projects/:projectId/project-users/:userId --> POST = project_user
+/projects/:projectId/project-users/:userId --> GET =project_user
+/projects/:projectId/project-users --> GET = project_users
+/project-invitations
 */

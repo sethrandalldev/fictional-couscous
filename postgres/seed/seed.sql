@@ -15,17 +15,15 @@ INSERT into users (
 );
 
 INSERT INTO projects (
-  name,
-  description
+  name
 ) values (
-  'Project Tracker',
+  'Project Tracker'
 );
 
 INSERT INTO projects (
-  name,
-  description
+  name
 ) values (
-  'Notebook App',
+  'Notebook App'
 );
 
 INSERT INTO project_users (

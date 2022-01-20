@@ -2,7 +2,7 @@ BEGIN TRANSACTION;
 
 CREATE TABLE projects (
   id serial PRIMARY KEY,
-  name TEXT NOT NULL,
+  name TEXT NOT NULL
 );
 
 COMMIT;
