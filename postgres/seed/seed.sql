@@ -11,7 +11,7 @@ INSERT into users (
   'Randall', 
   'seth@gmail.com', 
   '$argon2i$v=19$m=4096,t=3,p=1$r8GQ6QkZ4BQ/h7EVh/CN4w$trzsvDTJN+RvdsgtrblLixDoJhV08qre45ln4z16GaA',
-  '2022-01-01'
+  '2022-01-02'
 );
 
 INSERT INTO projects (

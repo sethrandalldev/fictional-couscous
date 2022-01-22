@@ -4,6 +4,9 @@ const argon2 = require("argon2");
 const cors = require("cors");
 const knex = require("knex");
 const morgan = require("morgan");
+const login = require("./controllers/login");
+const register = require("./controllers/register");
+const auth = require("./controllers/authorization");
 
 const db = knex({
   client: "pg",
@@ -16,52 +19,17 @@ app.use(morgan("combined"));
 app.use(bodyParser.json());
 app.use(cors());
 
-app.post("/login", (req, res) => {
-  const { email, password } = req.body;
-  db.select()
-    .table("users")
-    .where({
-      email: email,
-    })
-    .then(async (users) => {
-      const user = users[0];
-      try {
-        if (await argon2.verify(user.password, password)) {
-          res.json({
-            email: user.email,
-            firstName: user["first_name"],
-            lastName: user["last_name"],
-            id: user.id,
-            joined: user.joined,
-          });
-        } else {
-          res.status(404).json("Login failed; Invalid user ID or password.");
-        }
-      } catch (err) {
-        console.error(err);
-        res.status(400).json("Login failed; Server error.");
-      }
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(400).json("Login failed; Server error.");
-    });
-});
+app.post("/login", login.loginWithAuth(db, argon2));
+app.post("/register", register.register(db.argon2));
 
-app.post("/register", async (req, res) => {
-  const { email, firstName, lastName, password } = req.body;
-  try {
-    const hash = await argon2.hash(password);
-    db("users")
-      .returning(["id", "first_name", "last_name", "email", "joined"])
-      .insert({
-        email: email,
-        first_name: firstName,
-        last_name: lastName,
-        password: hash,
-        joined: new Date(),
-      })
-      .then((user) => {
+app.get("/users/:id", auth.requireAuth, (req, res) => {
+  const { id } = req.params;
+  db.select(["id", "first_name", "last_name", "email", "joined"])
+    .from("users")
+    .where({ id: id })
+    .then((users) => {
+      if (users.length) {
+        const user = users[0];
         res.json({
           email: user.email,
           firstName: user["first_name"],
@@ -69,32 +37,46 @@ app.post("/register", async (req, res) => {
           id: user.id,
           joined: user.joined,
         });
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(400).json("Unable to register.");
-      });
-  } catch (err) {
-    console.error(err);
-    res.status(400).json("Unable to register.");
-  }
-});
-
-app.get("/profile/:id", (req, res) => {
-  const { id } = req.params;
-  db.select(["id", "first_name", "last_name", "email", "joined"])
-    .from("users")
-    .where({ id: id })
-    .then((user) => {
-      if (user.length) res.json(user[0]);
-      else {
+      } else {
         res.status(400).json("Error getting user.");
       }
     })
     .catch((err) => res.status(400).json("Error getting user."));
 });
 
-app.post("/projects", (req, res) => {
+app.patch("/users/:userId", auth.requireAuth, (req, res) => {
+  const { userId } = req.params;
+  const { email, firstName, lastName } = req.body;
+  db("users")
+    .where({ id: userId })
+    .update({ email: email, first_name: firstName, last_name: lastName }, [
+      "id",
+      "first_name",
+      "last_name",
+      "email",
+      "joined",
+    ])
+    .then((users) => {
+      if (users.length) {
+        const user = users[0];
+        res.json({
+          email: user.email,
+          firstName: user["first_name"],
+          lastName: user["last_name"],
+          id: user.id,
+          joined: user.joined,
+        });
+      } else {
+        res.status(400).json("Error updating user.");
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(400).json("Error updating user.");
+    });
+});
+
+app.post("/projects", auth.requireAuth, (req, res) => {
   const { name, userId } = req.body;
   db("projects")
     .returning(["id", "title"])
@@ -125,7 +107,7 @@ app.post("/projects", (req, res) => {
     .catch((err) => res.status(400).json("Unable to create project."));
 });
 
-app.get("/projects", (req, res) => {
+app.get("/projects", auth.requireAuth, (req, res) => {
   db.select(["id", "name"])
     .from("projects")
     .then((projects) => {
@@ -134,7 +116,7 @@ app.get("/projects", (req, res) => {
     .catch((err) => res.status(400).json("Error getting projects."));
 });
 
-app.get("/projects/:projectId/tickets", (req, res) => {
+app.get("/projects/:projectId/tickets", auth.requireAuth, (req, res) => {
   const { projectId } = req.params;
   db.select([
     "id",
@@ -154,27 +136,31 @@ app.get("/projects/:projectId/tickets", (req, res) => {
     .catch((err) => res.status(400).json("Error getting tickets."));
 });
 
-app.get("/projects/:projectId/tickets/:ticketId/comments", (req, res) => {
-  const { projectId } = req.params;
-  db.select([
-    "id",
-    "title",
-    "description",
-    "created_by",
-    "assigned_to",
-    "priority",
-    "status",
-    "project_id",
-  ])
-    .from("tickets")
-    .where({ project_id: projectId })
-    .then((tickets) => {
-      res.status(200).json(tickets);
-    })
-    .catch((err) => res.status(400).json("Error getting tickets."));
-});
+app.get(
+  "/projects/:projectId/tickets/:ticketId/comments",
+  auth.requireAuth,
+  (req, res) => {
+    const { projectId } = req.params;
+    db.select([
+      "id",
+      "title",
+      "description",
+      "created_by",
+      "assigned_to",
+      "priority",
+      "status",
+      "project_id",
+    ])
+      .from("tickets")
+      .where({ project_id: projectId })
+      .then((tickets) => {
+        res.status(200).json(tickets);
+      })
+      .catch((err) => res.status(400).json("Error getting tickets."));
+  }
+);
 
-app.get("/projects/:projectId/project-users", (req, res) => {
+app.get("/projects/:projectId/project-users", auth.requireAuth, (req, res) => {
   const { projectId } = req.params;
   db.select(["id", "user_id", "is_admin", "project_id"])
     .from("project_users")
@@ -186,7 +172,7 @@ app.get("/projects/:projectId/project-users", (req, res) => {
 });
 
 // WHERE user.id === recipient.id OR WHERE user.id === sender.id
-app.get("/project-invitations", (req, res) => {
+app.get("/project-invitations", auth.requireAuth, (req, res) => {
   const { projectId } = req.params;
   db.select(["id", "user_id", "is_admin", "project_id"])
     .from("project_users")

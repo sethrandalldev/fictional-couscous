@@ -8,12 +8,17 @@ services:
     command: yarn start
     working_dir: /usr/src/project-tracker-api
     environment:
+      JWT_SECRET: yahoooo
       POSTGRES_URI: postgres://srandall:secret@postgres:5432/project_tracker
+      REDIS_URI: redis://redis:6379
     ports:
       - "4000:4000"
     volumes:
       - ./:/usr/src/project-tracker-api
       - /usr/src/project-tracker-api/node_modules
+    links:
+      - postgres
+      - redis
 
   # Postgres
   postgres:
@@ -25,3 +30,9 @@ services:
       POSTGRES_DB: project_tracker
       POSTGRES_HOST: postgres
       POSTGRES_PASSWORD: secret
+
+  # Redis
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
