@@ -20,7 +20,7 @@ app.use(bodyParser.json());
 app.use(cors());
 
 app.post("/login", login.loginWithAuth(db, argon2));
-app.post("/register", register.register(db.argon2));
+app.post("/register", register.register(db, argon2));
 
 app.get("/users/:id", auth.requireAuth, (req, res) => {
   const { id } = req.params;
