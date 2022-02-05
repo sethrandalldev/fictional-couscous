@@ -1,4 +1,4 @@
-const redisClient = require("./login").redisClient;
+const redisClient = require("./redis").redisClient;
 const jwt = require("jsonwebtoken");
 
 const requireAuth = (req, res, next) => {
