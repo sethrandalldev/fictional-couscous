@@ -4,7 +4,6 @@ CREATE TABLE project_users (
   id serial PRIMARY KEY,
   user_id INT,
   project_id INT NOT NULL,
-  is_admin BOOLEAN,
   CONSTRAINT fk_project
     FOREIGN KEY(project_id)
       REFERENCES projects(id)
