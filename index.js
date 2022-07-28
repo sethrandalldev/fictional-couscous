@@ -8,6 +8,8 @@ const login = require("./controllers/login");
 const register = require("./controllers/register");
 const auth = require("./controllers/authorization");
 
+let port = process.env.PORT || 4000;
+
 const db = knex({
   client: "pg",
   connection: process.env.POSTGRES_URI,
@@ -183,7 +185,7 @@ app.get("/project-invitations", auth.requireAuth, (req, res) => {
     .catch((err) => res.status(400).json("Error getting project users."));
 });
 
-app.listen(4000, () => {
+app.listen(port, () => {
   console.log("App is running on port 4000");
 });
 
