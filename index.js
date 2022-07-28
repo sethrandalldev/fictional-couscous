@@ -12,7 +12,10 @@ let port = process.env.PORT || 4000;
 
 const db = knex({
   client: "pg",
-  connection: process.env.POSTGRES_URI,
+  connection: {
+    host: "postgresql-objective-71779",
+  },
+  //process.env.POSTGRES_URI,
 });
 
 const app = express();
