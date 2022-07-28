@@ -116,7 +116,7 @@ app.post("/projects", auth.requireAuth, (req, res) => {
 });
 
 app.get("/projects", auth.requireAuth, (req, res) => {
-  db.select(["id", "name"])
+  db.select(["id", "title", "description"])
     .from("projects")
     .then((projects) => {
       res.status(200).json(projects);
