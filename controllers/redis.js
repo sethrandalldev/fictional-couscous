@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const Redis = require("ioredis");
-const redisClient = new Redis(process.env.REDIS_URI);
+const redisClient = new Redis(process.env.REDIS_URL);
 
 const signToken = (userId) => {
   const jwtPayload = { userId };
