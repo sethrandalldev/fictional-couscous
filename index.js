@@ -85,11 +85,14 @@ app.patch("/users/:userId", auth.requireAuth, (req, res) => {
 });
 
 app.post("/projects", auth.requireAuth, (req, res) => {
-  const { name, userId } = req.body;
+  const { title, description } = req.body;
+  const { userId } = req;
+
   db("projects")
     .returning(["id", "title"])
     .insert({
-      name: name,
+      title: title,
+      description: description,
     })
     .then((project) => {
       db("project_users")

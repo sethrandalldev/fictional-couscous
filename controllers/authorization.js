@@ -16,7 +16,8 @@ const requireAuth = (req, res, next) => {
         console.log("result: ", result);
         return res.status(401).json("Unauthorized");
       }
-      return next();
+      req.userId = decoded.userId;
+      return next(decoded);
     });
   });
 };
