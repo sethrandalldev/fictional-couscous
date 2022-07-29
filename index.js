@@ -121,7 +121,7 @@ app.get("/projects", auth.requireAuth, (req, res) => {
     .then((projects) => {
       res.status(200).json(projects);
     })
-    .catch((err) => res.status(400).json("Error getting projects."));
+    .catch((err) => res.status(400).json(err));
 });
 
 app.get("/projects/:projectId/tickets", auth.requireAuth, (req, res) => {
