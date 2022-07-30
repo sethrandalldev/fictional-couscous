@@ -90,18 +90,17 @@ app.post("/projects", auth.requireAuth, (req, res) => {
   const { userId } = req;
 
   db("projects")
-    .returning(["id", "title"])
+    .returning(["id", "title", "description"])
     .insert({
       title: title,
       description: description,
     })
     .then((project) => {
       db("project_users")
-        .returning(["id", "user_id", "project_id", "is_admin"])
+        .returning(["id", "user_id", "project_id"])
         .insert({
           user_id: userId,
           project_id: project.id,
-          is_admin: true,
         })
         .then((projectUser) => {
           res.json({
@@ -110,7 +109,6 @@ app.post("/projects", auth.requireAuth, (req, res) => {
               id: projectUser.id,
               userId: projectUser["user_id"],
               projectId: projectUser["projectId"],
-              isAdmin: projectUser.isAdmin,
             },
           });
         })
