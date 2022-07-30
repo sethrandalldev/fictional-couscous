@@ -85,6 +85,7 @@ app.patch("/users/:userId", auth.requireAuth, (req, res) => {
 });
 
 app.post("/projects", auth.requireAuth, (req, res) => {
+  console.log(req);
   const { title, description } = req.body;
   const { userId } = req;
 
