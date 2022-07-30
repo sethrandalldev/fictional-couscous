@@ -104,7 +104,9 @@ app.post("/projects", auth.requireAuth, (req, res) => {
           user_id: userId,
           project_id: project.id,
         })
-        .then((projectUser) => {
+        .then((projectUsers) => {
+          let projectUser;
+          if (projectUsers.length) projectUser = projectUsers[0];
           res.json({
             project: project,
             projectUser: {
