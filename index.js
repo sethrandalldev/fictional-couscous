@@ -95,8 +95,9 @@ app.post("/projects", auth.requireAuth, (req, res) => {
       title: title,
       description: description,
     })
-    .then((project) => {
-      console.log(project);
+    .then((projects) => {
+      let project;
+      if (projects.length) project = projects[0];
       db("project_users")
         .returning(["id", "user_id", "project_id"])
         .insert({
