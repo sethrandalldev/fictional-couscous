@@ -7,6 +7,7 @@ const requireAuth = (req, res, next) => {
     console.log("no authorization");
     return res.status(401).json("Unauthorized");
   }
+  console.log("authorized");
   jwt.verify(authorization, process.env.JWT_SECRET, (err, decoded) => {
     if (err) return res.status(401).json("Unauthorized jwt");
     console.log("decoded: ", decoded);
@@ -17,7 +18,8 @@ const requireAuth = (req, res, next) => {
         return res.status(401).json("Unauthorized");
       }
       req.userId = decoded.userId;
-      return next(decoded);
+      console.log("verified");
+      return next();
     });
   });
 };
