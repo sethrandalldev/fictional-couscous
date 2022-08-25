@@ -9,16 +9,21 @@ const register = require("./controllers/register");
 const auth = require("./controllers/authorization");
 
 let port = process.env.PORT || 4000;
-
-const db = knex({
-  client: "pg",
-  connection: {
+let dbConnection;
+if (process.env.DATABASE_URL) {
+  dbConnection = {
     connectionString: process.env.DATABASE_URL,
     ssl: {
       rejectUnauthorized: false,
     },
-  },
-  //process.env.POSTGRES_URI,
+  };
+} else {
+  dbConnection = process.env.POSTGRES_URI;
+}
+
+const db = knex({
+  client: "pg",
+  connection: dbConnection,
 });
 
 const app = express();
@@ -85,7 +90,6 @@ app.patch("/users/:userId", auth.requireAuth, (req, res) => {
 });
 
 app.post("/projects", auth.requireAuth, (req, res) => {
-  console.log(req);
   const { title, description } = req.body;
   const { userId } = req;
 
@@ -122,9 +126,10 @@ app.post("/projects", auth.requireAuth, (req, res) => {
 });
 
 app.get("/projects", auth.requireAuth, (req, res) => {
-  db.select(["id", "title", "description"])
-    .from("projects")
+  db.select()
+    .table("projects")
     .then((projects) => {
+      console.log(projects);
       res.status(200).json(projects);
     })
     .catch((err) => res.status(400).json(err));

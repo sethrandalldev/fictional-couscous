@@ -15,36 +15,32 @@ INSERT into users (
 );
 
 INSERT INTO projects (
-  name
+  title
 ) values (
   'Project Tracker'
 );
 
 INSERT INTO projects (
-  name
+  title
 ) values (
   'Notebook App'
 );
 
 INSERT INTO project_users (
   user_id,
-  project_id,
-  is_admin
+  project_id
 ) values (
   1,
-  1,
-  true
+  1
 );
 
 
 INSERT INTO project_users (
   user_id,
-  project_id,
-  is_admin
+  project_id
 ) values (
   1,
-  2,
-  true
+  2
 );
 
 COMMIT;

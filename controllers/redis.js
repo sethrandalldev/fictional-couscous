@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const Redis = require("ioredis");
-const redisClient = new Redis(process.env.REDIS_URL);
+const redisClient = new Redis(process.env.REDIS_URL || process.env.REDIS_URI);
 
 const signToken = (userId) => {
   const jwtPayload = { userId };
@@ -23,11 +23,12 @@ const createSession = (user) => {
 
 const getAuthTokenId = (req, res) => {
   const { authorization } = req.headers;
-  jwt.verify(authorization, process.env.JWT_SECRET, (err, decoded) => {
+  const token = authorization.replace(/^Bearer\s+/, "");
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) return res.status(400).json("Unauthorized");
     else {
       return redisClient.get(decoded.userId, (err, result) => {
-        if (err || !result || authorization !== result) {
+        if (err || !result || token !== result) {
           return res.status(400).json("Unauthorized");
         } else {
           return res.json({

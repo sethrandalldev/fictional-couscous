@@ -23,10 +23,10 @@ const login = (db, argon2, req, res) => {
           };
         } else return Promise.reject();
       } catch (err) {
-        return Promise.reject();
+        return Promise.reject(err);
       }
     })
-    .catch((err) => Promise.reject());
+    .catch((err) => Promise.reject(err));
 };
 
 const loginWithAuth = (db, argon2) => (req, res) => {
@@ -40,8 +40,7 @@ const loginWithAuth = (db, argon2) => (req, res) => {
             : Promise.reject("Login failed; server error");
         })
         .then((session) => res.json(session))
-        .catch((err) => res.status(400).json("Login failed; Server error."));
-  // return authorization ? getAuthTokenId : login(db, argon2);
+        .catch((err) => res.status(400).json(err));
 };
 
 module.exports = {
