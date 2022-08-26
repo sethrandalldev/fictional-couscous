@@ -135,6 +135,22 @@ app.get("/projects", auth.requireAuth, (req, res) => {
     .catch((err) => res.status(400).json(err));
 });
 
+app.get("/projects/:projectId", auth.requireAuth, (req, res) => {
+  const { projectId } = req.params;
+  db.select()
+    .table("projects")
+    .where({ id: projectId })
+    .then((projects) => {
+      if (projects.length) {
+        const project = projects[0];
+        res.status(200).json(project);
+      } else {
+        res.status(404).json("Not found.");
+      }
+    })
+    .catch((err) => res.status(400).json(err));
+});
+
 app.get("/projects/:projectId/tickets", auth.requireAuth, (req, res) => {
   const { projectId } = req.params;
   db.select([
